@@ -1,0 +1,17 @@
+
+#results {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+#results p {
+  margin: 5px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}

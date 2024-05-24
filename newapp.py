@@ -5,6 +5,7 @@ import io
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from transformers import pipeline
 from transformers import AutoTokenizer, AutoModelForTokenClassification
+import os,sys
 
 # pipe = pipeline("token-classification", model = "./trainedmodel/test", tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased"))
 pipe = pipeline("token-classification", model="george6/roberta-finetuned-NER")
@@ -33,11 +34,16 @@ for handler in logging.getLogger().handlers:
     elif isinstance(handler, logging.StreamHandler) and handler.stream is sys.stdout:
         handler.setStream(io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8'))
 
+def doRender(tname, values={}):
+	if not os.path.isfile( os.path.join(os.getcwd(), 'templates/'+tname) ):
+		return render_template('index.html')
+	return render_template(tname, **values) 
+
 def requestResults(text):
     text = text.decode("utf-8")
     # app.logger.info(text)
     prediction = pipe(text)
-
+    #app.logger.info(prediction)
     # filter out brackets and join subwords
     exclude_tokens_filtered_list = []
     filtered_list = []
@@ -60,6 +66,7 @@ def requestResults(text):
         if tags['word'].startswith('Ġ'):
             filtered_list.append(tags)
 
+    #app.logger.info(filtered_list)
     return filtered_list
 
 def log_interaction(input_text, filtered_list):
@@ -74,7 +81,7 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/predict', methods=['POST', 'GET'])
 def get_data():
     if request.method == 'POST':
         text = request.get_data()
@@ -91,5 +98,17 @@ def get_data():
         return jsonify(ner_tags_list)
 
 
+@app.route('/logs')
+def index():
+    log_file_path = 'logs/interaction_log.txt'
+    log_contents = []
+
+    if os.path.exists(log_file_path):
+        with open(log_file_path, 'r') as file:
+            log_contents = file.readlines()
+
+    return render_template('logs.html', log_contents=log_contents)
+
+
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000, debug=True)
